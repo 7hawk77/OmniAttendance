@@ -235,7 +235,8 @@ function OA:AddCharacterToRoster(roster, characterName, mainName, source)
 
     local mainKey
     if mainName and trim(mainName) ~= "" then
-        mainKey = self:NormalizeName(mainName)
+        local requestedMainKey = self:NormalizeName(mainName)
+        mainKey = self.db.aliases[requestedMainKey] or requestedMainKey
         if characterKey ~= mainKey then
             self.db.aliases[characterKey] = mainKey
             self.db.aliasNames[characterKey] = self:DisplayName(characterName)
