@@ -1,0 +1,35 @@
+name: Validate and package addon
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Install Lua 5.1 and zip
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes lua5.1 zip
+
+      - name: Validate Lua syntax
+        run: luac5.1 -p Core.lua UI.lua
+
+      - name: Build installable addon
+        run: |
+          mkdir -p build/OmniAttendance
+          cp OmniAttendance.toc Core.lua UI.lua build/OmniAttendance/
+          cp README.md CHANGELOG.md LICENSE build/OmniAttendance/
+          cd build
+          zip -r OmniAttendance.zip OmniAttendance
+
+      - name: Upload installable ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: OmniAttendance
+          path: build/OmniAttendance.zip
+          if-no-files-found: error

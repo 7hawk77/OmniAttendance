@@ -1,0 +1,17 @@
+## Interface: 120100
+## Interface-Classic: 11509
+## Interface-BCC: 20506
+## Interface-Wrath: 30405
+## Interface-Titan: 38002
+## Interface-Cata: 40402
+## Interface-Mists: 50504, 50505
+## Title: Omni Attendance
+## Notes: Officer-controlled rolling raid attendance with Gargul Boosted Rolls integration.
+## Author: Omni
+## Version: 0.1.0
+## SavedVariables: OmniAttendanceDB
+## OptionalDeps: Gargul
+## X-Category: Raid
+
+Core.lua
+UI.lua
