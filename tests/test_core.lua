@@ -92,6 +92,7 @@ OmniAttendanceDB = nil
 local OA = {}
 local chunk = assert(loadfile("Core.lua"))
 chunk("OmniAttendance", OA)
+OA.Show = function() end
 eventHandler(nil, "ADDON_LOADED", "OmniAttendance")
 
 expect(OA.db ~= nil, "database initializes")
