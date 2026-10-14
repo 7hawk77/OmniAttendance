@@ -36,6 +36,7 @@ It records only officer-confirmed raid events, keeps the complete history perman
 | `/oa export gargul` | Show Gargul import data |
 | `/oa sync` | Replace Gargul Boosted Rolls with current attendance points |
 | `/oa broadcast` | Broadcast Gargul's current Boosted Rolls data |
+| `/oa status` | Show Forever, Gargul, database, and integration diagnostics |
 
 `/omniattendance` is also accepted.
 
@@ -43,9 +44,11 @@ It records only officer-confirmed raid events, keeps the complete history perman
 
 1. Download the repository ZIP from GitHub.
 2. Rename the extracted folder to `OmniAttendance`.
-3. Place it in `World of Warcraft/_classic_era_/Interface/AddOns/`.
+3. Place it in the active WoW Forever client's `Interface/AddOns/` folder.
 4. Enable **Omni Attendance** on the character-selection AddOns screen.
-5. Install and enable Gargul for direct Boosted Rolls synchronization.
+5. Install and enable Gargul 8.0.1 for direct Boosted Rolls synchronization.
+
+The addon ships both `OmniAttendance.toc` and `OmniAttendance_Camelot.toc`, each declaring Forever interface `16001`.
 
 ## Data and backups
 
@@ -53,4 +56,5 @@ Data is stored account-wide in `OmniAttendanceDB`. World of Warcraft writes Save
 
 ## Status
 
-Initial development version. In-game testing is required before relying on it for a live loot decision.
+Version 0.1.1 is aligned with the WoW Forever client and Gargul 8.0.1. Complete the in-game checklist before relying on it for a live loot decision.
+

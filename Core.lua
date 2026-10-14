@@ -1,7 +1,9 @@
 local addonName, OA = ...
 _G.OmniAttendance = OA
 
-OA.VERSION = "0.1.0"
+OA.VERSION = "0.1.1"
+OA.FOREVER_INTERFACE = 16001
+OA.TESTED_GARGUL_VERSION = "8.0.1"
 OA.PREFIX = "|cff4fc3f7Omni Attendance|r: "
 
 local function trim(value)
@@ -699,16 +701,75 @@ function OA:ShowExport(kind)
     self:OpenExportWindow(title, content)
 end
 
+function OA:GetGargulVersion()
+    local getMetadata = C_AddOns and C_AddOns.GetAddOnMetadata or GetAddOnMetadata
+    if type(getMetadata) ~= "function" then
+        return nil
+    end
+
+    local success, version = pcall(getMetadata, "Gargul", "Version")
+    if success and version and version ~= "" then
+        return tostring(version)
+    end
+    return nil
+end
+
+function OA:GargulIntegrationReady(requireBroadcast)
+    local GL = _G.Gargul
+    if not GL or GL._initialized == false then
+        return false, "Gargul is not fully loaded."
+    end
+    if not GL.BoostedRolls or type(GL.BoostedRolls.import) ~= "function" then
+        return false, "Gargul's Boosted Rolls import API is unavailable."
+    end
+    if not GL.Settings or type(GL.Settings.set) ~= "function" then
+        return false, "Gargul's settings API is unavailable."
+    end
+    if requireBroadcast and type(GL.BoostedRolls.broadcast) ~= "function" then
+        return false, "Gargul's Boosted Rolls broadcast API is unavailable."
+    end
+    return true
+end
+
+function OA:ShowStatus()
+    local version, build, _, interfaceVersion = GetBuildInfo()
+    local gargulVersion = self:GetGargulVersion() or "not detected"
+    local integrationReady, reason = self:GargulIntegrationReady(true)
+    local draftState = self.db.draft and "active (not yet recorded)" or "none"
+
+    self:Print(("v%s | WoW %s build %s | interface %s"):format(
+        self.VERSION,
+        tostring(version or "?"),
+        tostring(build or "?"),
+        tostring(interfaceVersion or "?")
+    ))
+    self:Print(("Gargul %s | integration %s"):format(
+        gargulVersion,
+        integrationReady and "ready" or ("not ready: " .. tostring(reason))
+    ))
+    self:Print(("%d archived raid(s) | rolling window %d | draft %s"):format(
+        #self.db.raids,
+        self.db.settings.windowSize,
+        draftState
+    ))
+
+    if tonumber(interfaceVersion) == self.FOREVER_INTERFACE then
+        self:Print("Forever interface detected correctly.")
+    end
+end
+
 function OA:SyncGargul()
     if not self:RequireOfficer() then
         return false
     end
 
-    local GL = _G.Gargul
-    if not GL or not GL.BoostedRolls or type(GL.BoostedRolls.import) ~= "function" then
-        self:Print("Gargul 8.0.0 or a compatible version must be enabled.")
+    local integrationReady, reason = self:GargulIntegrationReady(false)
+    if not integrationReady then
+        self:Print(reason .. " Gargul " .. self.TESTED_GARGUL_VERSION .. " is recommended.")
         return false
     end
+
+    local GL = _G.Gargul
 
     local data = self:ExportGargul()
     if data == "" then
@@ -716,18 +777,20 @@ function OA:SyncGargul()
         return false
     end
 
-    local imported = GL.BoostedRolls:import(data, false)
+    local success, imported = pcall(GL.BoostedRolls.import, GL.BoostedRolls, data, false)
+    if not success then
+        self:Print("Gargul sync failed: " .. tostring(imported))
+        return false
+    end
     if not imported then
         self:Print("Gargul did not accept the attendance data.")
         return false
     end
 
-    if GL.Settings and type(GL.Settings.set) == "function" then
-        GL.Settings:set("BoostedRolls.enabled", true)
-        GL.Settings:set("BoostedRolls.defaultPoints", 100)
-        GL.Settings:set("BoostedRolls.reserveThreshold", 0)
-        GL.Settings:set("BoostedRolls.system", 0)
-    end
+    GL.Settings:set("BoostedRolls.enabled", true)
+    GL.Settings:set("BoostedRolls.defaultPoints", 100)
+    GL.Settings:set("BoostedRolls.reserveThreshold", 0)
+    GL.Settings:set("BoostedRolls.system", 0)
 
     self:Print(("Gargul synced for %d player(s). Use /oa broadcast if you want to share it now."):format(
         #sortedKeys(self:GetScores())
@@ -740,12 +803,13 @@ function OA:BroadcastGargul()
         return false
     end
 
-    local GL = _G.Gargul
-    if not GL or not GL.BoostedRolls or type(GL.BoostedRolls.broadcast) ~= "function" then
-        self:Print("Gargul 8.0.0 or a compatible version must be enabled.")
+    local integrationReady, reason = self:GargulIntegrationReady(true)
+    if not integrationReady then
+        self:Print(reason .. " Gargul " .. self.TESTED_GARGUL_VERSION .. " is recommended.")
         return false
     end
 
+    local GL = _G.Gargul
     return GL.BoostedRolls:broadcast()
 end
 
@@ -771,7 +835,7 @@ function OA:ListRaids()
 end
 
 function OA:ShowHelp()
-    self:Print("Commands: start, add, remove, save, cancel, raids, edit, void, restore, alias, unalias, window, export, sync, broadcast")
+    self:Print("Commands: start, add, remove, save, cancel, raids, edit, void, restore, alias, unalias, window, export, sync, broadcast, status")
     self:Print("Use /oa export summary, /oa export history, or /oa export gargul.")
 end
 
@@ -814,6 +878,8 @@ function OA:HandleSlash(message)
         self:SyncGargul()
     elseif command == "broadcast" then
         self:BroadcastGargul()
+    elseif command == "status" then
+        self:ShowStatus()
     elseif command == "help" then
         self:ShowHelp()
     else
@@ -844,3 +910,4 @@ eventFrame:SetScript("OnEvent", function(_, _, loadedAddon)
 
     OA:Print(("v%s loaded. Type /oa help for commands."):format(OA.VERSION))
 end)
+

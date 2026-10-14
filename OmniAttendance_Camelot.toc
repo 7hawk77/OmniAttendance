@@ -1,0 +1,12 @@
+## Interface: 16001
+## Title: Omni Attendance
+## Notes: Officer-controlled rolling raid attendance with Gargul Boosted Rolls integration.
+## Author: Omni
+## Version: 0.1.1
+## SavedVariables: OmniAttendanceDB
+## OptionalDeps: Gargul
+## X-Category: Raid
+## X-Compatible-With: Gargul 8.0.1
+
+Core.lua
+UI.lua
