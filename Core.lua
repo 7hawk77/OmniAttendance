@@ -1,7 +1,7 @@
 local addonName, OA = ...
 _G.OmniAttendance = OA
 
-OA.VERSION = "0.1.1"
+OA.VERSION = "0.1.2"
 OA.FOREVER_INTERFACE = 16001
 OA.TESTED_GARGUL_VERSION = "8.0.1"
 OA.PREFIX = "|cff4fc3f7Omni Attendance|r: "

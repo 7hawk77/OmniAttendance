@@ -42,9 +42,9 @@ It records only officer-confirmed raid events, keeps the complete history perman
 
 ## Installation
 
-1. Download the repository ZIP from GitHub.
-2. Rename the extracted folder to `OmniAttendance`.
-3. Place it in the active WoW Forever client's `Interface/AddOns/` folder.
+1. Download the latest `OmniAttendance-vX.Y.Z.zip` file from [GitHub Releases](https://github.com/7hawk77/OmniAttendance/releases/latest).
+2. Extract it directly into the active WoW Forever client's `Interface/AddOns/` folder.
+3. Confirm the resulting path is `Interface/AddOns/OmniAttendance/OmniAttendance.toc`.
 4. Enable **Omni Attendance** on the character-selection AddOns screen.
 5. Install and enable Gargul 8.0.1 for direct Boosted Rolls synchronization.
 
@@ -56,5 +56,5 @@ Data is stored account-wide in `OmniAttendanceDB`. World of Warcraft writes Save
 
 ## Status
 
-Version 0.1.1 is aligned with the WoW Forever client and Gargul 8.0.1. Complete the in-game checklist before relying on it for a live loot decision.
+Version 0.1.2 is aligned with the WoW Forever client and Gargul 8.0.1. Complete the in-game checklist before relying on it for a live loot decision.
 
