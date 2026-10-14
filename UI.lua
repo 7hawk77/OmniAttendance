@@ -24,10 +24,11 @@ local function makeEditBox(parent, width, height)
     return box
 end
 
-local function joinCharacters(characters)
+local function joinCharacters(characters, mainName)
     local names = {}
+    local mainKey = OA:NormalizeName(mainName)
     for name, included in pairs(characters or {}) do
-        if included then
+        if included and OA:NormalizeName(name) ~= mainKey then
             table.insert(names, name)
         end
     end
@@ -41,7 +42,7 @@ function UI:CreateMainWindow()
     end
 
     local frame = CreateFrame("Frame", "OmniAttendanceMainFrame", UIParent, "BasicFrameTemplateWithInset")
-    frame:SetSize(790, 610)
+    frame:SetSize(790, 650)
     frame:SetPoint("CENTER")
     frame:SetMovable(true)
     frame:EnableMouse(true)
@@ -147,7 +148,7 @@ function UI:CreateMainWindow()
     end)
 
     local windowLabel = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-    windowLabel:SetPoint("TOPLEFT", 16, -526)
+    windowLabel:SetPoint("TOPLEFT", 16, -548)
     windowLabel:SetText("Rolling raid window")
 
     local windowBox = makeEditBox(frame, 52, 24)
@@ -162,7 +163,7 @@ function UI:CreateMainWindow()
     end)
 
     local exportSummaryButton = makeButton(frame, "Summary CSV", 105)
-    exportSummaryButton:SetPoint("TOPLEFT", 16, -564)
+    exportSummaryButton:SetPoint("TOPLEFT", 16, -586)
     exportSummaryButton:SetScript("OnClick", function()
         OA:ShowExport("summary")
     end)
@@ -244,29 +245,40 @@ function UI:RefreshRoster()
     for index, mainKey in ipairs(keys) do
         local row = self.RosterRows[index]
         if not row then
-            row = CreateFrame("CheckButton", nil, child, "UICheckButtonTemplate")
-            row:SetSize(410, 24)
+            row = CreateFrame("Frame", nil, child)
+            row:SetSize(410, 26)
+
+            row.Background = row:CreateTexture(nil, "BACKGROUND")
+            row.Background:SetAllPoints()
+            row.Background:SetColorTexture(1, 1, 1, 0.035)
+
+            row.Check = CreateFrame("CheckButton", nil, row, "UICheckButtonTemplate")
+            row.Check:SetSize(24, 24)
+            row.Check:SetPoint("LEFT", row, "LEFT", 0, 0)
+
             row.Text = row:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-            row.Text:SetPoint("LEFT", row, "LEFT", 28, 0)
-            row.Text:SetWidth(370)
+            row.Text:SetPoint("LEFT", row.Check, "RIGHT", 5, 0)
+            row.Text:SetPoint("RIGHT", row, "RIGHT", -4, 0)
             row.Text:SetJustifyH("LEFT")
             self.RosterRows[index] = row
         end
 
         local entry = draft.roster[mainKey]
-        row:SetPoint("TOPLEFT", 0, -(index - 1) * 25)
-        row:SetChecked(entry.present and true or false)
-        local characters = joinCharacters(entry.characters)
+        row:ClearAllPoints()
+        row:SetPoint("TOPLEFT", 0, -(index - 1) * 27)
+        row.Background:SetColorTexture(1, 1, 1, index % 2 == 0 and 0.055 or 0.025)
+        row.Check:SetChecked(entry.present and true or false)
+        local characters = joinCharacters(entry.characters, entry.mainName)
         local suffix = characters ~= "" and ("  |cff888888(" .. characters .. ")|r") or ""
         row.Text:SetText((entry.mainName or OA:GetPlayerName(mainKey)) .. suffix)
-        row:SetScript("OnClick", function(button)
+        row.Check:SetScript("OnClick", function(button)
             entry.present = button:GetChecked() and true or false
             UI:Refresh()
         end)
         row:Show()
     end
 
-    child:SetHeight(math.max(1, #keys * 25))
+    child:SetHeight(math.max(1, #keys * 27))
     self.RosterTitle:SetText(("Draft roster (%d credited / %d listed)"):format(
         draft and OA:CountPresent(draft.roster) or 0,
         #keys
@@ -438,3 +450,4 @@ function OA:OpenExportWindow(title, content)
     UI.ExportEditBox:SetFocus()
     UI.ExportEditBox:HighlightText()
 end
+

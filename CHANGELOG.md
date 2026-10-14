@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2 - 2026-10-14
+
+- Fixed stretched draft-roster checkmarks by keeping the checkbox at its native size.
+- Improved roster readability for long Forever names and hid duplicate main-name aliases.
+- Added alternating roster-row backgrounds and more space below manual-entry hints.
+- Added an automatic GitHub Release workflow that publishes an install-ready addon ZIP.
+
 ## 0.1.1 - 2026-10-14
 
 - Added native WoW Forever interface `16001` metadata and a Camelot TOC.

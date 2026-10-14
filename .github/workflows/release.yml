@@ -1,0 +1,77 @@
+name: Publish addon release
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "OmniAttendance.toc"
+      - "OmniAttendance_Camelot.toc"
+      - "Core.lua"
+      - "UI.lua"
+      - "README.md"
+      - "CHANGELOG.md"
+      - "LICENSE"
+      - ".github/workflows/release.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Read and validate version
+        id: version
+        shell: bash
+        run: |
+          version="$(sed -n 's/^## Version: //p' OmniAttendance.toc | head -n 1)"
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Invalid addon version: $version" >&2
+            exit 1
+          fi
+          core_version="$(sed -n 's/^OA.VERSION = "\([^"]*\)"/\1/p' Core.lua | head -n 1)"
+          if [[ "$core_version" != "$version" ]]; then
+            echo "Core.lua version $core_version does not match TOC version $version" >&2
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=v$version" >> "$GITHUB_OUTPUT"
+
+      - name: Check whether release exists
+        id: existing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build install-ready ZIP
+        if: steps.existing.outputs.exists == 'false'
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          mkdir -p build/OmniAttendance
+          cp OmniAttendance.toc OmniAttendance_Camelot.toc Core.lua UI.lua build/OmniAttendance/
+          cp README.md CHANGELOG.md LICENSE build/OmniAttendance/
+          cd build
+          zip -r "OmniAttendance-v${VERSION}.zip" OmniAttendance
+
+      - name: Publish GitHub Release
+        if: steps.existing.outputs.exists == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.version.outputs.tag }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "$TAG" "build/OmniAttendance-v${VERSION}.zip" \
+            --target "$GITHUB_SHA" \
+            --title "OmniAttendance v${VERSION}" \
+            --generate-notes
