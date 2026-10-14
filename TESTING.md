@@ -5,8 +5,9 @@ Use a copied WoW installation or a non-live raid before relying on the addon for
 ## Loading
 
 - Put the repository contents in a folder named `OmniAttendance`.
-- Confirm both Gargul 8.0.0 and Omni Attendance are enabled.
+- Confirm both Gargul 8.0.1 and Omni Attendance are enabled.
 - Log in and confirm there are no Lua errors.
+- Run `/oa status` and confirm it reports interface `16001`, Gargul `8.0.1`, and `integration ready`.
 - Run `/oa` and verify the window opens.
 
 ## Explicit recording
@@ -50,3 +51,4 @@ Use a copied WoW installation or a non-live raid before relying on the addon for
 - Log out normally.
 - Confirm `OmniAttendance.lua` exists under the account SavedVariables folder.
 - Copy it elsewhere and verify the archived raids are readable Lua data.
+

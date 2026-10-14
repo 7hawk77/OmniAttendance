@@ -1,4 +1,5 @@
-## Interface: 120100
+## Interface: 16001
+## Interface-Camelot: 16001
 ## Interface-Classic: 11509
 ## Interface-BCC: 20506
 ## Interface-Wrath: 30405
@@ -8,10 +9,12 @@
 ## Title: Omni Attendance
 ## Notes: Officer-controlled rolling raid attendance with Gargul Boosted Rolls integration.
 ## Author: Omni
-## Version: 0.1.0
+## Version: 0.1.1
 ## SavedVariables: OmniAttendanceDB
 ## OptionalDeps: Gargul
 ## X-Category: Raid
+## X-Compatible-With: Gargul 8.0.1
 
 Core.lua
 UI.lua
+
