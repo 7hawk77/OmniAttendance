@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.3 - 2026-10-14
+
+- Fixed Gargul synchronization for WoW Forever character names containing spaces.
+- Added a native Gargul 8.0.1 data bridge because its CSV parser treats spaces as column separators.
+- Preserved capitalization for both parts of Forever character names.
+- Preserved the CSV integration path for clients whose character names do not contain spaces.
+
 ## 0.1.2 - 2026-10-14
 
 - Fixed stretched draft-roster checkmarks by keeping the checkbox at its native size.

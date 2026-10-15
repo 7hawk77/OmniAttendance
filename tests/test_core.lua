@@ -15,7 +15,7 @@ DEFAULT_CHAT_FRAME = {
 }
 
 local serverTime = 1000
-local groupNames = { "Mainone-Realm", "Altone-Realm", "Absent-Realm" }
+local groupNames = { "Kordesh Divinesoul-Realm", "Kordesh Arcanist-Realm", "Absent Player-Realm" }
 
 GetServerTime = function()
     return serverTime
@@ -44,7 +44,7 @@ UnitIsGroupAssistant = function()
 end
 GetUnitName = function(unit)
     local index = tonumber(unit:match("raid(%d+)$"))
-    return index and groupNames[index] or "Mainone-Realm"
+    return index and groupNames[index] or "Kordesh Divinesoul-Realm"
 end
 
 local eventHandler
@@ -72,10 +72,44 @@ local importedData
 local settings = {}
 Gargul = {
     _initialized = true,
+    DB = {},
+    uuid = function()
+        return "test-uuid"
+    end,
+    Events = {
+        fire = function() end,
+    },
+    Interface = {
+        BoostedRolls = {
+            Overview = {
+                refreshTable = function() end,
+            },
+        },
+    },
     BoostedRolls = {
         import = function(_, data)
             importedData = data
-            return true
+            return not data:find("%s")
+        end,
+        playerGUID = function(_, name)
+            return string.lower(name)
+        end,
+        clear = function(self)
+            Gargul.DB.BoostedRolls = {
+                Points = {},
+                Aliases = {},
+                MetaData = {},
+            }
+            self.MaterializedData = { DetailsByPlayerName = {} }
+        end,
+        materializeData = function(self)
+            self.MaterializedData = { DetailsByPlayerName = {} }
+            for name, points in pairs(Gargul.DB.BoostedRolls.Points or {}) do
+                self.MaterializedData.DetailsByPlayerName[name] = {
+                    points = points,
+                    Aliases = {},
+                }
+            end
         end,
         broadcast = function()
             return true
@@ -98,35 +132,43 @@ eventHandler(nil, "ADDON_LOADED", "OmniAttendance")
 expect(OA.db ~= nil, "database initializes")
 expect(#OA.db.raids == 0, "no raid is recorded on load")
 
-OA:SetAlias("Altone-Realm", "Mainone-Realm")
+OA:SetAlias("Kordesh Arcanist-Realm", "Kordesh Divinesoul-Realm")
 OA:StartRaid("Molten Core")
 expect(#OA.db.raids == 0, "starting creates only a draft")
 expect(OA.db.draft ~= nil, "draft exists after start")
 expect(OA:CountPresent(OA.db.draft.roster) == 2, "alt and main consolidate into one attendance credit")
 
-OA.db.draft.roster[OA:ResolveMain("Absent-Realm")].present = false
+OA.db.draft.roster[OA:ResolveMain("Absent Player-Realm")].present = false
 OA:SaveDraft()
 expect(#OA.db.raids == 1, "save creates one official raid")
 expect(OA.db.draft == nil, "draft clears after save")
 
 for index = 2, 11 do
     serverTime = serverTime + 1
-    groupNames = { "Mainone-Realm" }
+    groupNames = { "Kordesh Divinesoul-Realm" }
     OA:StartRaid("Raid " .. index)
     OA:SaveDraft()
 end
 
 local scores = OA:GetScores()
-local mainKey = OA:ResolveMain("Mainone-Realm")
+local mainKey = OA:ResolveMain("Kordesh Divinesoul-Realm")
 expect(scores[mainKey] == 10, "rolling score uses the latest ten raids")
 expect(#OA.db.raids == 11, "older raids remain archived")
 
 local summary = OA:ExportSummary()
 expect(summary:find("GargulPoints", 1, true) ~= nil, "summary CSV has its header")
-expect(summary:find("Mainone%-Realm") ~= nil, "summary CSV includes the main")
+expect(summary:find("Kordesh Divinesoul%-Realm") ~= nil, "summary CSV includes a two-part Forever main")
 
 expect(OA:SyncGargul(), "Gargul sync succeeds")
-expect(importedData and importedData:find(",110", 1, true), "Gargul receives 100 plus attendance")
+expect(importedData == nil, "two-part Forever names bypass Gargul's whitespace-splitting CSV importer")
+expect(
+    Gargul.DB.BoostedRolls.Points["kordesh divinesoul-realm"] == 110,
+    "native Gargul sync receives 100 plus attendance for a two-part name"
+)
+expect(
+    Gargul.DB.BoostedRolls.Aliases["kordesh arcanist-realm"] == "kordesh divinesoul-realm",
+    "native Gargul sync preserves two-part alt aliases"
+)
 expect(settings["BoostedRolls.enabled"] == true, "Boosted Rolls are enabled")
 expect(settings["BoostedRolls.defaultPoints"] == 100, "Gargul default points are 100")
 expect(settings["BoostedRolls.reserveThreshold"] == 0, "Gargul reserve threshold is disabled")

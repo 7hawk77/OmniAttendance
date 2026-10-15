@@ -9,7 +9,7 @@
 ## Title: Omni Attendance
 ## Notes: Officer-controlled rolling raid attendance with Gargul Boosted Rolls integration.
 ## Author: Omni
-## Version: 0.1.2
+## Version: 0.1.3
 ## SavedVariables: OmniAttendanceDB
 ## OptionalDeps: Gargul
 ## X-Category: Raid
