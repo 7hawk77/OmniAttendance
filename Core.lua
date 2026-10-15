@@ -59,13 +59,18 @@ function OA:DisplayName(name)
         return nil
     end
 
-    local character, realm = name:match("^([^%-]+)%-(.+)$")
-    if character then
-        character = character:sub(1, 1):upper() .. character:sub(2):lower()
-        return character .. "-" .. realm
+    local function capitalizeWords(value)
+        return (value:gsub("(%S+)", function(word)
+            return word:sub(1, 1):upper() .. word:sub(2):lower()
+        end))
     end
 
-    return name:sub(1, 1):upper() .. name:sub(2):lower()
+    local character, realm = name:match("^([^%-]+)%-(.+)$")
+    if character then
+        return capitalizeWords(character) .. "-" .. realm
+    end
+
+    return capitalizeWords(name)
 end
 
 function OA:InitializeDatabase()
