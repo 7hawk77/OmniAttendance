@@ -1,7 +1,7 @@
 local addonName, OA = ...
 _G.OmniAttendance = OA
 
-OA.VERSION = "0.1.2"
+OA.VERSION = "0.1.3"
 OA.FOREVER_INTERFACE = 16001
 OA.TESTED_GARGUL_VERSION = "8.0.1"
 OA.PREFIX = "|cff4fc3f7Omni Attendance|r: "
@@ -758,6 +758,82 @@ function OA:ShowStatus()
     end
 end
 
+function OA:GargulDataNeedsNativeImport()
+    for mainKey in pairs(self:GetScores()) do
+        if tostring(self:GetPlayerName(mainKey) or ""):find("%s") then
+            return true
+        end
+        for _, alias in ipairs(self:GetAliases(mainKey)) do
+            if tostring(alias or ""):find("%s") then
+                return true
+            end
+        end
+    end
+    return false
+end
+
+function OA:ImportGargulNative(GL)
+    local BR = GL and GL.BoostedRolls
+    if not BR
+        or not GL.DB
+        or type(BR.playerGUID) ~= "function"
+        or type(BR.clear) ~= "function"
+        or type(BR.materializeData) ~= "function"
+        or type(GL.uuid) ~= "function"
+    then
+        return false
+    end
+
+    local points = {}
+    local aliases = {}
+    local scores = self:GetScores()
+
+    for _, mainKey in ipairs(sortedKeys(scores)) do
+        local mainGUID = BR:playerGUID(self:GetPlayerName(mainKey))
+        points[mainGUID] = 100 + scores[mainKey]
+
+        for _, alias in ipairs(self:GetAliases(mainKey)) do
+            local aliasGUID = BR:playerGUID(alias)
+            if aliasGUID ~= mainGUID and not points[aliasGUID] and not aliases[aliasGUID] then
+                aliases[aliasGUID] = mainGUID
+            end
+        end
+    end
+
+    if not next(points) then
+        return false
+    end
+
+    -- Gargul 8.0.1's text importer treats spaces as column separators, which
+    -- makes Forever's two-part character names impossible to import as CSV.
+    -- Populate the same structure used by Gargul's own importer instead.
+    BR:clear(false)
+    local now = GetServerTime()
+    GL.DB.BoostedRolls = {
+        Points = points,
+        Aliases = aliases,
+        MetaData = {
+            importedAt = now,
+            updatedAt = now,
+            uuid = GL:uuid(),
+        },
+    }
+
+    BR:materializeData()
+    if GL.Events and type(GL.Events.fire) == "function" then
+        GL.Events:fire("GL.BOOSTEDROLLS_IMPORTED")
+    end
+
+    local overview = GL.Interface
+        and GL.Interface.BoostedRolls
+        and GL.Interface.BoostedRolls.Overview
+    if overview and type(overview.refreshTable) == "function" then
+        overview:refreshTable()
+    end
+
+    return true
+end
+
 function OA:SyncGargul()
     if not self:RequireOfficer() then
         return false
@@ -777,7 +853,12 @@ function OA:SyncGargul()
         return false
     end
 
-    local success, imported = pcall(GL.BoostedRolls.import, GL.BoostedRolls, data, false)
+    local success, imported
+    if self:GargulDataNeedsNativeImport() then
+        success, imported = pcall(self.ImportGargulNative, self, GL)
+    else
+        success, imported = pcall(GL.BoostedRolls.import, GL.BoostedRolls, data, false)
+    end
     if not success then
         self:Print("Gargul sync failed: " .. tostring(imported))
         return false

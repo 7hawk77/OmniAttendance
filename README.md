@@ -56,5 +56,5 @@ Data is stored account-wide in `OmniAttendanceDB`. World of Warcraft writes Save
 
 ## Status
 
-Version 0.1.2 is aligned with the WoW Forever client and Gargul 8.0.1. Complete the in-game checklist before relying on it for a live loot decision.
+Version 0.1.3 is aligned with the WoW Forever client and Gargul 8.0.1, including native synchronization for Forever's two-part character names. Complete the in-game checklist before relying on it for a live loot decision.
 
